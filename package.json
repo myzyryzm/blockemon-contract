@@ -1,0 +1,13 @@
+{
+    "name": "blockemon",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "build": "node asconfig.js",
+        "test": "asp --nologo"
+    },
+    "dependencies": {
+        "near-sdk-as": "^3.1.0",
+        "prettier": "^2.2.1"
+    }
+}

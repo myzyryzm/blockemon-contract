@@ -7,7 +7,9 @@
         "test": "asp --nologo"
     },
     "dependencies": {
-        "near-sdk-as": "^3.1.0",
+        "@types/node": "^14.14.36",
+        "assemblyscript": "^0.9.4",
+        "near-sdk-as": "^0.3.1",
         "prettier": "^2.2.1"
     }
 }

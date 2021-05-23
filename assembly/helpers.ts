@@ -1,94 +1,130 @@
 /** @format */
 
-import { base64, math } from 'near-sdk-as'
-import { maxBaseValue, pokemonTypes } from './constants'
+import { base64, context, math, storage } from 'near-sdk-as'
 import {
-    orderedPokemonList,
-    Pokemon,
-    pokemonByOwner,
-    PokemonIdList,
-    pokemonMap
+    orderedBlockemonList,
+    blockemonByOwner,
+    BlockemonIdList,
+    blockemonMap,
+    Blockemon,
+    MonkeySpecies,
+    monkeySpeciesIdMap,
+    monkeyIdMap,
+    Monkey,
+    monkeyIdOwnerMap,
+    MonkeyIdList,
+    orderedMonkeyIdList,
+    orderedMonkeySpeciesList,
 } from './models'
 
 /**
- * Gets all the pokemon ids for a specified owner
+ * Gets all the blockemon ids for a specified owner
  * @param owner
  * @returns
  */
-export function getPokemonIdsForOwner(owner: string): Array<string> {
-    const pokemonIdList = pokemonByOwner.get(owner)
-    return !pokemonIdList ? new Array<string>() : pokemonIdList.id
+export function getBlockemonIdsForOwner(owner: string): Array<string> {
+    const blockemonIdList = blockemonByOwner.get(owner)
+    return !blockemonIdList ? new Array<string>() : blockemonIdList.id
 }
 
 /**
- * Removes a pokemon from an owner
+ * Removes a blockemon from an owner
  * @param owner
  * @param id
  */
-export function removePokemonFromOwner(owner: string, id: string): void {
-    const pokeIds = getPokemonIdsForOwner(owner)
-    for (let i = 0; i < pokeIds.length; i++) {
-        if (id == pokeIds[i]) {
-            pokeIds.splice(i, 1)
+export function removeBlockemonFromOwner(owner: string, id: string): void {
+    const blockIds = getBlockemonIdsForOwner(owner)
+    for (let i = 0; i < blockIds.length; i++) {
+        if (id == blockIds[i]) {
+            blockIds.splice(i, 1)
             break
         }
     }
-    pokemonByOwner.set(owner, new PokemonIdList(pokeIds))
+    blockemonByOwner.set(owner, new BlockemonIdList(blockIds))
 }
 
 /**
- * Adds a pokemon to the pokemonMap (key: uint8arrary, value: pokemon); it adds the id to the owner's pokemonList in the pokemonByOwner map
- * @param pokemon
+ * Adds a blockemon to the blockemonMap (key: uint8arrary, value: blockemon); it adds the id to the owner's blockemonList in the blockemonByOwner map
+ * @param blockemon
  * @param owner
  * @param id
  */
-export function addPokemon(
-    pokemon: Pokemon,
+export function addBlockemon(
+    blockemon: Blockemon,
     owner: string,
     addToGlobal: boolean
 ): void {
-    pokemonMap.set(base64.decode(pokemon.id), pokemon)
+    blockemonMap.set(base64.decode(blockemon.id), blockemon)
     if (addToGlobal) {
-        updateOrderedPokemonList(pokemon.id)
+        updateOrderedBlockemonList(blockemon.id)
     }
-    const pokemonIds = getPokemonIdsForOwner(owner)
-    pokemonIds.push(pokemon.id)
-    pokemonByOwner.set(owner, new PokemonIdList(pokemonIds))
+    const blockemonIds = getBlockemonIdsForOwner(owner)
+    blockemonIds.push(blockemon.id)
+    blockemonByOwner.set(owner, new BlockemonIdList(blockemonIds))
 }
 
 /**
- * Gets all the ids of the pokemon.
+ * Gets all the ids of the blockemon.
  * @returns
  */
-export function getAllPokemonIds(): Array<string> {
-    const pokemonIdList = orderedPokemonList.get('all')
-    return pokemonIdList ? pokemonIdList.id : new Array<string>()
+export function getAllBlockemonIds(): Array<string> {
+    const blockemonIdList = orderedBlockemonList.get('all')
+    return blockemonIdList ? blockemonIdList.id : new Array<string>()
 }
 
 /**
- * Updates the ordered pokemon list
+ * Updates the ordered blockemon list
  * @param id
  */
-export function updateOrderedPokemonList(id: string): void {
-    const allPokemonIds = getAllPokemonIds()
-    allPokemonIds.push(id)
-    const pokemon = new PokemonIdList(allPokemonIds)
-    orderedPokemonList.set('all', pokemon)
+export function updateOrderedBlockemonList(id: string): void {
+    const allBlockemonIds = getAllBlockemonIds()
+    allBlockemonIds.push(id)
+    const blockemon = new BlockemonIdList(allBlockemonIds)
+    orderedBlockemonList.set('all', blockemon)
 }
 
 /**
- * Deletes a pokemon from the ordered pokemon list with the given id.
+ * Deletes a blockemon from the ordered blockemon list with the given id.
  * @param id
  */
-export function deleteFromOrderedPokemonList(id: string): void {
-    const globalIds = getAllPokemonIds()
+export function deleteFromOrderedBlockemonList(id: string): void {
+    const globalIds = getAllBlockemonIds()
     for (let i = 0; i < globalIds.length; i++) {
         if (id == globalIds[i]) {
             globalIds.splice(i, 1)
             break
         }
     }
-    orderedPokemonList.set('all', new PokemonIdList(globalIds))
+    orderedBlockemonList.set('all', new BlockemonIdList(globalIds))
+}
+
+/**
+ * Has contract been initialized
+ */
+export function assertHasInit(): void {
+    assert(storage.hasKey('init'), 'contract not initialized')
+}
+
+export function isCEO(): bool {
+    return storage.get<string>('ceo') == context.sender
+}
+
+/**
+ * If the user interacting with the contract the ceo
+ */
+export function assertIsCEO(): void {
+    assert(isCEO(), 'User is not ceo')
+}
+
+/**
+ * returns true if the context.sender is the owner of the blockemon
+ * @param blockemon
+ */
+export function assertIsOwner(blockemon: Blockemon): void {
+    assert(
+        blockemon.owner == context.sender,
+        'The blockemon does not belong to ' + context.sender
+    )
 }
 
 /**
@@ -100,65 +136,128 @@ export function randomNumber(): i32 {
 }
 
 /**
- * Returns list of random numbers of $amount length
- * @param amount
- * @returns
- */
-export function randomNumbers(amount: number): i32[] {
-    let nums: Array<i32> = []
-    for (let i = 0; i < amount; i++) {
-        nums.push(randomNumber())
-    }
-    return nums
-}
-
-/**
- * Returns a random integer between 0 and maxBaseValue
- * @returns
- */
-export function randomBaseValue(): i32 {
-    const num = randomNumber()
-    const modifier = 99 / maxBaseValue
-    const randomIndex = num / modifier
-    return randomIndex < maxBaseValue ? randomIndex : maxBaseValue
-}
-
-/**
- * Returns a random pokemon type
- * @returns
- */
-export function randomPokemonType(): string {
-    const num = randomNumber()
-    const modifier = 99 / pokemonTypes.length
-    let randomIndex = num / modifier
-    if (randomIndex > pokemonTypes.length - 1) {
-        randomIndex = pokemonTypes.length
-    }
-    return pokemonTypes[randomIndex]
-}
-
-/**
- * Gets a pokemon by a specified id.
+ * Gets a blockemon by a specified id.
  * @param id
  * @returns
  */
-export function pokemonById(id: string): Pokemon {
-    return pokemonMap.getSome(base64.decode(id))
+export function blockemonById(id: string): Blockemon {
+    return blockemonMap.getSome(base64.decode(id))
 }
 
 /**
- * Calculates the damage for a given interaction
- * @param level
- * @param basePower
- * @param attack
- * @param defense
+ * Creates a new monkey species
+ * @param id
+ * @param maxMonkeys
+ * @returns the newly created MonkeySpecies
+ */
+export function addNewMonkeySpecies(id: u64, maxMonkeys: u64): MonkeySpecies {
+    assert(
+        !monkeySpeciesIdMap.contains(id),
+        'Cannot create monkey species with that id'
+    )
+    const species = new MonkeySpecies(id, maxMonkeys)
+    monkeySpeciesIdMap.set(species.id, species)
+    addMonkeySpeciesToGlobalList(id)
+    return species
+}
+
+/**
+ * Creates a new monkey
+ * @param id
+ * @param speciesId
+ * @param owner
  * @returns
  */
-export function calculateDamage(
-    level: i32,
-    basePower: i32,
-    attack: i32,
-    defense: i32
-): i32 {
-    return (((2 * level) / 5 + 2) * basePower * attack) / defense / 50 + 2
+export function addNewMonkey(id: u64, speciesId: u64, owner: string): Monkey {
+    assert(!monkeyIdMap.contains(id), 'Error: monkey with id already exists')
+    const species = monkeySpeciesIdMap.getSome(speciesId)
+    const monkey: Monkey = new Monkey(id, speciesId, owner)
+    assert(
+        species.numberIssued < species.maxMonkeys,
+        'Error: all monkeys of this species have been created'
+    )
+    addMonkeyToOwner(monkey.id, owner)
+    addMonkeyToGlobalList(monkey.id)
+    return monkey
+}
+
+/**
+ * Gets all the monkey ids for a specified owner
+ * @param owner
+ * @returns
+ */
+export function getMonkeyIdsForOwner(owner: string): Array<u64> {
+    const monkeyIdList = monkeyIdOwnerMap.get(owner)
+    return !monkeyIdList ? new Array<u64>() : monkeyIdList.id
+}
+
+/**
+ * Adds a monkey to the monkey owner map
+ * @param monkeyId
+ * @param owner
+ */
+export function addMonkeyToOwner(monkeyId: u64, owner: string): void {
+    const monkeyIds = getMonkeyIdsForOwner(owner)
+    monkeyIds.push(monkeyId)
+    monkeyIdOwnerMap.set(owner, new MonkeyIdList(monkeyIds))
+}
+
+/**
+ * removes a monkey from the specified owner
+ * @param monkeyId
+ * @param owner
+ */
+export function removeMonkeyFromOwner(monkeyId: u64, owner: string): void {
+    const monkeyIds = getMonkeyIdsForOwner(owner)
+    for (let i = 0; i < monkeyIds.length; i++) {
+        if (monkeyId === monkeyIds[i]) {
+            monkeyIds.splice(i, 1)
+            break
+        }
+    }
+    monkeyIdOwnerMap.set(owner, new MonkeyIdList(monkeyIds))
+}
+
+/**
+ *
+ * @returns all the monkey ids from the monkeyid list
+ */
+export function getAllMonkeyIds(): Array<u64> {
+    const monkeyIdList = orderedMonkeyIdList.get('all')
+    return monkeyIdList ? monkeyIdList.id : new Array<u64>()
+}
+
+/**
+ * adds a monkey to the orderedMonkeyIdList
+ * @param monkeyId
+ */
+export function addMonkeyToGlobalList(monkeyId: u64): void {
+    const monkeyIds = getAllMonkeyIds()
+    assert(
+        !monkeyIds.includes(monkeyId),
+        'Error: Trying to add monkey to monkey id list that already exists'
+    )
+    monkeyIds.push(monkeyId)
+    const monkeyIdList = new MonkeyIdList(monkeyIds)
+    orderedMonkeyIdList.set('all', monkeyIdList)
+}
+
+export function getAllMonkeySpeciesIds(): Array<u64> {
+    const monkeyIdList = orderedMonkeySpeciesList.get('all')
+    return monkeyIdList ? monkeyIdList.id : new Array<u64>()
+}
+
+export function addMonkeySpeciesToGlobalList(speciesId: u64): void {
+    const monkeyIds = getAllMonkeyIds()
+    assert(
+        !monkeyIds.includes(speciesId),
+        'Error: Trying to add monkey to monkey id list that already exists'
+    )
+    monkeyIds.push(speciesId)
+    const monkeyIdList = new MonkeyIdList(monkeyIds)
+    orderedMonkeySpeciesList.set('all', monkeyIdList)
+}
+
+export function monkeyById(id: u64): Monkey {
+    return monkeyIdMap.getSome(id)
 }

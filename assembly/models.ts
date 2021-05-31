@@ -45,8 +45,6 @@ export class Monkey {
 }
 
 // mapping of monkey
-// key => Monkey.id; value => list of account ids other than the owner account and the contract account that can transfer
-export const monkeyEscrowMap = new PersistentMap<u64, EscrowMonkeyIds>('e')
 
 // genes
 // 3 => AA | 2 => Aa | 1 => aa
@@ -75,15 +73,19 @@ export const monkeyIdMap = new PersistentMap<u64, Monkey>('mon')
 // key => owner; value => list of Monkey.id the owner has access to
 export const monkeyIdOwnerMap = new PersistentMap<string, MonkeyIdList>('own')
 
-// key => MonkeySpecies.id; value => MonkeySpecies
-export const monkeySpeciesIdMap = new PersistentMap<u64, MonkeySpecies>('ms')
-
-// key => 'all'; value => list of all the monkey species ids
-export const orderedMonkeySpeciesList = new PersistentMap<string, MonkeyIdList>(
-    'omsl'
-)
-
 // key => 'all'; value => list of all the monkey ids
 export const orderedMonkeyIdList = new PersistentMap<string, MonkeyIdList>(
     'oml'
 )
+
+// key => MonkeySpecies.id; value => MonkeySpecies
+export const monkeySpeciesIdMap = new PersistentMap<u64, MonkeySpecies>('ms')
+
+// key => 'all'; value => list of all the monkey species ids
+export const orderedMonkeySpeciesIdList = new PersistentMap<
+    string,
+    MonkeyIdList
+>('omsl')
+
+// key => Monkey.id; value => list of account ids other than the owner account and the contract account that can transfer
+export const monkeyEscrowMap = new PersistentMap<u64, EscrowMonkeyIds>('e')

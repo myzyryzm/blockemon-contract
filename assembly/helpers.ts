@@ -14,7 +14,9 @@ import {
     monkeyIdOwnerMap,
     MonkeyIdList,
     orderedMonkeyIdList,
-    orderedMonkeySpeciesList,
+    orderedMonkeySpeciesIdList,
+    EscrowMonkeyIds,
+    monkeyEscrowMap,
 } from './models'
 
 /**
@@ -99,6 +101,17 @@ export function deleteFromOrderedBlockemonList(id: string): void {
 }
 
 /**
+ * Gets a blockemon by a specified id.
+ * @param id
+ * @returns
+ */
+export function blockemonById(id: string): Blockemon {
+    return blockemonMap.getSome(base64.decode(id))
+}
+
+// GENERAL
+
+/**
  * Has contract been initialized
  */
 export function assertHasInit(): void {
@@ -128,6 +141,18 @@ export function assertIsOwner(blockemon: Blockemon): void {
 }
 
 /**
+ * Checks to see if the context.sender
+ * @param monkey
+ */
+export function assertCanTransfer(monkey: Monkey): void {
+    // if not the owner of the monkey then we need to check
+    if (monkey.owner !== context.sender) {
+        const escrowIds: EscrowMonkeyIds = monkeyEscrowMap.getSome(monkey.id)
+        assert(escrowIds.id.includes(context.sender))
+    }
+}
+
+/**
  * returns a random number between 0 and 99
  * @returns
  */
@@ -135,14 +160,7 @@ export function randomNumber(): i32 {
     return math.hash32Bytes(math.randomBuffer(4)) % 100
 }
 
-/**
- * Gets a blockemon by a specified id.
- * @param id
- * @returns
- */
-export function blockemonById(id: string): Blockemon {
-    return blockemonMap.getSome(base64.decode(id))
-}
+// MONKEY SPECIES
 
 /**
  * Creates a new monkey species
@@ -161,6 +179,24 @@ export function addNewMonkeySpecies(id: u64, maxMonkeys: u64): MonkeySpecies {
     return species
 }
 
+export function getAllMonkeySpeciesIds(): Array<u64> {
+    const monkeyIdList = orderedMonkeySpeciesIdList.get('all')
+    return monkeyIdList ? monkeyIdList.id : new Array<u64>()
+}
+
+export function addMonkeySpeciesToGlobalList(speciesId: u64): void {
+    const monkeyIds = getAllMonkeyIds()
+    assert(
+        !monkeyIds.includes(speciesId),
+        'Error: Trying to add monkey to monkey id list that already exists'
+    )
+    monkeyIds.push(speciesId)
+    const monkeyIdList = new MonkeyIdList(monkeyIds)
+    orderedMonkeySpeciesIdList.set('all', monkeyIdList)
+}
+
+// MONKEY
+
 /**
  * Creates a new monkey
  * @param id
@@ -174,9 +210,9 @@ export function addNewMonkey(id: u64, speciesId: u64, owner: string): Monkey {
     const monkey: Monkey = new Monkey(id, speciesId, owner)
     assert(
         species.numberIssued < species.maxMonkeys,
-        'Error: all monkeys of this species have been created'
+        'Error: all monkeys of this species have been issued'
     )
-    addMonkeyToOwner(monkey.id, owner)
+    addMonkeyToOwner(monkey, owner)
     addMonkeyToGlobalList(monkey.id)
     return monkey
 }
@@ -196,7 +232,9 @@ export function getMonkeyIdsForOwner(owner: string): Array<u64> {
  * @param monkeyId
  * @param owner
  */
-export function addMonkeyToOwner(monkeyId: u64, owner: string): void {
+export function addMonkeyToOwner(monkey: Monkey, owner: string): void {
+    monkey.owner = owner
+    const monkeyId = monkey.id
     const monkeyIds = getMonkeyIdsForOwner(owner)
     monkeyIds.push(monkeyId)
     monkeyIdOwnerMap.set(owner, new MonkeyIdList(monkeyIds))
@@ -207,7 +245,8 @@ export function addMonkeyToOwner(monkeyId: u64, owner: string): void {
  * @param monkeyId
  * @param owner
  */
-export function removeMonkeyFromOwner(monkeyId: u64, owner: string): void {
+export function removeMonkeyFromOwner(monkey: Monkey, owner: string): void {
+    const monkeyId = monkey.id
     const monkeyIds = getMonkeyIdsForOwner(owner)
     for (let i = 0; i < monkeyIds.length; i++) {
         if (monkeyId === monkeyIds[i]) {
@@ -218,14 +257,7 @@ export function removeMonkeyFromOwner(monkeyId: u64, owner: string): void {
     monkeyIdOwnerMap.set(owner, new MonkeyIdList(monkeyIds))
 }
 
-/**
- *
- * @returns all the monkey ids from the monkeyid list
- */
-export function getAllMonkeyIds(): Array<u64> {
-    const monkeyIdList = orderedMonkeyIdList.get('all')
-    return monkeyIdList ? monkeyIdList.id : new Array<u64>()
-}
+// ALL MONKEYS
 
 /**
  * adds a monkey to the orderedMonkeyIdList
@@ -242,22 +274,15 @@ export function addMonkeyToGlobalList(monkeyId: u64): void {
     orderedMonkeyIdList.set('all', monkeyIdList)
 }
 
-export function getAllMonkeySpeciesIds(): Array<u64> {
-    const monkeyIdList = orderedMonkeySpeciesList.get('all')
+/**
+ *
+ * @returns all the monkey ids from the monkeyid list
+ */
+export function getAllMonkeyIds(): Array<u64> {
+    const monkeyIdList = orderedMonkeyIdList.get('all')
     return monkeyIdList ? monkeyIdList.id : new Array<u64>()
 }
 
-export function addMonkeySpeciesToGlobalList(speciesId: u64): void {
-    const monkeyIds = getAllMonkeyIds()
-    assert(
-        !monkeyIds.includes(speciesId),
-        'Error: Trying to add monkey to monkey id list that already exists'
-    )
-    monkeyIds.push(speciesId)
-    const monkeyIdList = new MonkeyIdList(monkeyIds)
-    orderedMonkeySpeciesList.set('all', monkeyIdList)
-}
-
-export function monkeyById(id: u64): Monkey {
+export function getMonkeyById(id: u64): Monkey {
     return monkeyIdMap.getSome(id)
 }

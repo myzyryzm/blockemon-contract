@@ -4,10 +4,12 @@ import { context, base64, math, storage } from 'near-sdk-as'
 import {
     Blockemon,
     blockemonMap,
+    Monkey,
+    monkeyIdMap,
     MonkeySpecies,
     monkeySpeciesIdMap,
     orderedMonkeyIdList,
-    orderedMonkeySpeciesList,
+    orderedMonkeySpeciesIdList,
 } from './models'
 import {
     addBlockemon,
@@ -21,6 +23,11 @@ import {
     isCEO,
     assertIsOwner,
     addNewMonkeySpecies,
+    addNewMonkey,
+    getMonkeyById,
+    assertCanTransfer,
+    addMonkeyToOwner,
+    removeMonkeyFromOwner,
 } from './helpers'
 
 /************************/
@@ -61,7 +68,7 @@ export function createBlockemon(owner: string): Blockemon {
  */
 export function createMonkeySpecies(maxMonkeys: u64): MonkeySpecies {
     assertIsCEO()
-    const speciesIdList = orderedMonkeySpeciesList.get('all')
+    const speciesIdList = orderedMonkeySpeciesIdList.get('all')
     let numSpecies: u64 = 0
     if (speciesIdList) {
         numSpecies = speciesIdList.id.length as u64
@@ -92,6 +99,56 @@ export function createMonkeySpeciesWithId(
     )
     const species = addNewMonkeySpecies(id, maxMonkeys)
     return species
+}
+
+/**
+ * Creates a monkey with an auto generated id
+ * @param speciesId
+ * @param owner
+ * @returns
+ */
+export function createMonkey(speciesId: u64, owner: string): Monkey {
+    assertIsCEO()
+    const monkeyIdList = orderedMonkeyIdList.get('all')
+    let numMonkeys: u64 = 0
+    if (monkeyIdList) {
+        numMonkeys = monkeyIdList.id.length as u64
+    }
+    let monkeyId = numMonkeys + 1
+    while (monkeyIdMap.contains(monkeyId)) {
+        monkeyId++
+    }
+    const monkey = addNewMonkey(monkeyId, speciesId, owner)
+    return monkey
+}
+
+/**
+ * Creats a monkey by specifying the id
+ * @param id
+ * @param speciesId
+ * @param owner
+ * @returns
+ */
+export function createMonkeyWithId(
+    id: u64,
+    speciesId: u64,
+    owner: string
+): Monkey {
+    assertIsCEO()
+    assert(
+        !monkeyIdMap.contains(id),
+        'Error: monkey with specified id already exists'
+    )
+    const monkey = addNewMonkey(id, speciesId, owner)
+    return monkey
+}
+
+export function transferMonkey(newOwner: string, id: u64): Monkey {
+    const monkey = getMonkeyById(id)
+    assertCanTransfer(monkey)
+    addMonkeyToOwner(monkey, newOwner)
+    removeMonkeyFromOwner(monkey, context.sender)
+    return monkey
 }
 
 /**

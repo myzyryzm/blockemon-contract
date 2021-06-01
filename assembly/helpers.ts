@@ -46,43 +46,12 @@ export function removeBlockemonFromOwner(owner: string, id: string): void {
 }
 
 /**
- * Adds a blockemon to the blockemonMap (key: uint8arrary, value: blockemon); it adds the id to the owner's blockemonList in the blockemonByOwner map
- * @param blockemon
- * @param owner
- * @param id
- */
-export function addBlockemon(
-    blockemon: Blockemon,
-    owner: string,
-    addToGlobal: boolean
-): void {
-    blockemonMap.set(base64.decode(blockemon.id), blockemon)
-    if (addToGlobal) {
-        updateOrderedBlockemonList(blockemon.id)
-    }
-    const blockemonIds = getBlockemonIdsForOwner(owner)
-    blockemonIds.push(blockemon.id)
-    blockemonByOwner.set(owner, new BlockemonIdList(blockemonIds))
-}
-
-/**
  * Gets all the ids of the blockemon.
  * @returns
  */
 export function getAllBlockemonIds(): Array<string> {
     const blockemonIdList = orderedBlockemonList.get('all')
     return blockemonIdList ? blockemonIdList.id : new Array<string>()
-}
-
-/**
- * Updates the ordered blockemon list
- * @param id
- */
-export function updateOrderedBlockemonList(id: string): void {
-    const allBlockemonIds = getAllBlockemonIds()
-    allBlockemonIds.push(id)
-    const blockemon = new BlockemonIdList(allBlockemonIds)
-    orderedBlockemonList.set('all', blockemon)
 }
 
 /**

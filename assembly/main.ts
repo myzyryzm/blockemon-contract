@@ -12,7 +12,6 @@ import {
     orderedMonkeySpeciesIdList,
 } from './models'
 import {
-    addBlockemon,
     deleteFromOrderedBlockemonList,
     getAllBlockemonIds,
     getBlockemonIdsForOwner,
@@ -47,19 +46,6 @@ export function initializeContract(): string {
 /*******************/
 /* CHANGE METHODS */
 /*****************/
-
-/**
- * Creates a blockemon and assigns its owner as specified in the transaction.
- * @param owner
- */
-export function createBlockemon(owner: string): Blockemon {
-    assertHasInit()
-    assertIsCEO()
-    const id = base64.encode(math.randomBuffer(16))
-    const blockemon = new Blockemon(id, owner)
-    addBlockemon(blockemon, owner, true)
-    return blockemon
-}
 
 /**
  * Create a monkey species with an auto generated id
@@ -146,8 +132,8 @@ export function createMonkeyWithId(
 export function transferMonkey(newOwner: string, id: u64): Monkey {
     const monkey = getMonkeyById(id)
     assertCanTransfer(monkey)
+    removeMonkeyFromOwner(monkey, monkey.owner)
     addMonkeyToOwner(monkey, newOwner)
-    removeMonkeyFromOwner(monkey, context.sender)
     return monkey
 }
 
@@ -162,20 +148,6 @@ export function deleteBlockemon(id: string): void {
     removeBlockemonFromOwner(blockemon.owner, id)
     deleteFromOrderedBlockemonList(id)
     blockemonMap.delete(base64.decode(id))
-}
-
-// /**
-//  * Transfers a blockemon with specified id from the sender to a newOwner.
-//  * @param newOwner
-//  * @param id
-//  */
-export function transferBlockemon(newOwner: string, id: string): void {
-    assertHasInit()
-    const blockemon = blockemonById(id)
-    assertIsOwner(blockemon)
-    removeBlockemonFromOwner(blockemon.owner, id)
-    blockemon.owner = newOwner
-    addBlockemon(blockemon, newOwner, false)
 }
 
 /*****************/

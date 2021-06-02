@@ -2,8 +2,6 @@
 
 import { context, base64, math, storage } from 'near-sdk-as'
 import {
-    Blockemon,
-    blockemonMap,
     Monkey,
     monkeyIdMap,
     MonkeySpecies,
@@ -12,21 +10,19 @@ import {
     orderedMonkeySpeciesIdList,
 } from './models'
 import {
-    deleteFromOrderedBlockemonList,
-    getAllBlockemonIds,
-    getBlockemonIdsForOwner,
-    removeBlockemonFromOwner,
-    blockemonById,
     assertHasInit,
     assertIsCEO,
     isCEO,
-    assertIsOwner,
     addNewMonkeySpecies,
     addNewMonkey,
-    getMonkeyById,
+    monkeyById,
     assertCanTransfer,
     addMonkeyToOwner,
     removeMonkeyFromOwner,
+    assertIsOwner,
+    deleteFromMonkeyBlockemonList,
+    getMonkeyIdsForOwner,
+    getAllMonkeyIds,
 } from './helpers'
 
 /************************/
@@ -130,24 +126,20 @@ export function createMonkeyWithId(
 }
 
 export function transferMonkey(newOwner: string, id: u64): Monkey {
-    const monkey = getMonkeyById(id)
+    const monkey = monkeyById(id)
     assertCanTransfer(monkey)
     removeMonkeyFromOwner(monkey, monkey.owner)
     addMonkeyToOwner(monkey, newOwner)
     return monkey
 }
 
-/**
- * Deletes a blockemon with a specified id.
- * @param id
- */
-export function deleteBlockemon(id: string): void {
+export function deleteMonkey(id: u64): void {
     assertHasInit()
-    const blockemon = blockemonById(id)
-    assertIsOwner(blockemon)
-    removeBlockemonFromOwner(blockemon.owner, id)
-    deleteFromOrderedBlockemonList(id)
-    blockemonMap.delete(base64.decode(id))
+    const monkey = monkeyById(id)
+    assertIsOwner(monkey)
+    removeMonkeyFromOwner(monkey, monkey.owner)
+    deleteFromMonkeyBlockemonList(id)
+    monkeyIdMap.delete(id)
 }
 
 /*****************/
@@ -155,50 +147,51 @@ export function deleteBlockemon(id: string): void {
 /****************/
 
 /**
- * Gets the list of blockemon for a the sender's account.
+ * Gets the list of monkeys for a the sender's account.
  * @param owner
  * @returns
  */
-export function getUserBlockemon(): Blockemon[] {
+export function getUserMonkeys(): Monkey[] {
     assertHasInit()
-    const blockemonIds = getBlockemonIdsForOwner(context.sender)
-    let blockemonList = new Array<Blockemon>()
-    for (let i = 0; i < blockemonIds.length; i++) {
-        const id = base64.decode(blockemonIds[i])
-        if (blockemonMap.contains(id)) {
-            blockemonList.push(blockemonMap.getSome(id))
+    const monkeyIds = getMonkeyIdsForOwner(context.sender)
+    let monkeyList = new Array<Monkey>()
+    const numIds = monkeyIds.length
+    for (let i = 0; i < numIds; i++) {
+        const id = monkeyIds[i]
+        if (monkeyIdMap.contains(id)) {
+            monkeyList.push(monkeyIdMap.getSome(id))
         }
     }
-    return blockemonList
+    return monkeyList
 }
 
 /**
- * Gets a blockemon by a specified id. CEO can get any blockemon but users can only get blockemon they own.
+ * Gets a monkey by a specified id. CEO can get any monkey but users can only get monkey they own.
  * @param id
  * @returns
  */
-export function getBlockemonById(id: string): Blockemon {
+export function getMonkeyById(id: u64): Monkey {
     assertHasInit()
-    const blockemon = blockemonById(id)
+    const monkey = monkeyById(id)
     if (isCEO()) {
-        return blockemon
+        return monkey
     }
-    assertIsOwner(blockemon)
-    return blockemon
+    assertIsOwner(monkey)
+    return monkey
 }
 
 /**
- * Gets all blockemon. Only available for CEO.
+ * Gets all monkeys. Only available for CEO.
  * @returns
  */
-export function getAllBlockemon(): Blockemon[] {
+export function getAllMonkeys(): Monkey[] {
     assertHasInit()
     assertIsCEO()
-    const allBlockemonIds = getAllBlockemonIds().reverse()
-    const numberOfBlockemon = allBlockemonIds.length
-    const result = new Array<Blockemon>(numberOfBlockemon)
+    const allMonkeyIds = getAllMonkeyIds().reverse()
+    const numberOfBlockemon = allMonkeyIds.length
+    const result = new Array<Monkey>(numberOfBlockemon)
     for (let i = 0; i < numberOfBlockemon; i++) {
-        result[i] = blockemonById(allBlockemonIds[i])
+        result[i] = monkeyById(allMonkeyIds[i])
     }
     return result
 }

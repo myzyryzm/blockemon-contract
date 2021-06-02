@@ -2,30 +2,6 @@
 
 import { PersistentMap } from 'near-sdk-as'
 
-/**
- * Handles data relevant to the contract (e.g. the address of the account )
- */
-@nearBindgen
-export class BlockemonContract {
-    constructor(public ceoAddress: string = '') {}
-}
-
-@nearBindgen
-export class BlockemonIdList {
-    constructor(public id: Array<string>) {}
-}
-
-@nearBindgen
-export class Blockemon {
-    distanceRan: u64 = 0
-    coinsCollected: u64 = 0
-    gene1: u8 = 10
-    bodyPrimaryColor: u8 = 0
-    bodySecondaryColor: u8 = 1
-
-    constructor(public id: string, public owner: string) {}
-}
-
 @nearBindgen
 export class MonkeyIdList {
     constructor(public id: Array<u64>) {}
@@ -35,9 +11,6 @@ export class MonkeyIdList {
 export class EscrowMonkeyIds {
     constructor(public id: Array<string>) {}
 }
-
-// @nearBindgen
-// export class
 
 @nearBindgen
 export class Monkey {
@@ -53,19 +26,6 @@ export class MonkeySpecies {
     numberIssued: u64
     constructor(public id: u64, public maxMonkeys: u64) {}
 }
-
-// key => pokemon id in Unit8Array; value => pokemon
-export const blockemonMap = new PersistentMap<Uint8Array, Blockemon>('m')
-
-// key => ownerId; value => list of ids of pokemon
-export const blockemonByOwner = new PersistentMap<string, BlockemonIdList>('o')
-
-// key => 'all'; value => list of all the pokemon ids
-export const orderedBlockemonList = new PersistentMap<string, BlockemonIdList>(
-    'l'
-)
-
-export const blockemonContract: BlockemonContract = new BlockemonContract()
 
 // key => Monkey.id; value => Monkey
 export const monkeyIdMap = new PersistentMap<u64, Monkey>('mon')

@@ -2,11 +2,6 @@
 
 import { base64, context, math, storage } from 'near-sdk-as'
 import {
-    orderedBlockemonList,
-    blockemonByOwner,
-    BlockemonIdList,
-    blockemonMap,
-    Blockemon,
     MonkeySpecies,
     monkeySpeciesIdMap,
     monkeyIdMap,
@@ -18,65 +13,6 @@ import {
     EscrowMonkeyIds,
     monkeyEscrowMap,
 } from './models'
-
-/**
- * Gets all the blockemon ids for a specified owner
- * @param owner
- * @returns
- */
-export function getBlockemonIdsForOwner(owner: string): Array<string> {
-    const blockemonIdList = blockemonByOwner.get(owner)
-    return !blockemonIdList ? new Array<string>() : blockemonIdList.id
-}
-
-/**
- * Removes a blockemon from an owner
- * @param owner
- * @param id
- */
-export function removeBlockemonFromOwner(owner: string, id: string): void {
-    const blockIds = getBlockemonIdsForOwner(owner)
-    for (let i = 0; i < blockIds.length; i++) {
-        if (id == blockIds[i]) {
-            blockIds.splice(i, 1)
-            break
-        }
-    }
-    blockemonByOwner.set(owner, new BlockemonIdList(blockIds))
-}
-
-/**
- * Gets all the ids of the blockemon.
- * @returns
- */
-export function getAllBlockemonIds(): Array<string> {
-    const blockemonIdList = orderedBlockemonList.get('all')
-    return blockemonIdList ? blockemonIdList.id : new Array<string>()
-}
-
-/**
- * Deletes a blockemon from the ordered blockemon list with the given id.
- * @param id
- */
-export function deleteFromOrderedBlockemonList(id: string): void {
-    const globalIds = getAllBlockemonIds()
-    for (let i = 0; i < globalIds.length; i++) {
-        if (id == globalIds[i]) {
-            globalIds.splice(i, 1)
-            break
-        }
-    }
-    orderedBlockemonList.set('all', new BlockemonIdList(globalIds))
-}
-
-/**
- * Gets a blockemon by a specified id.
- * @param id
- * @returns
- */
-export function blockemonById(id: string): Blockemon {
-    return blockemonMap.getSome(base64.decode(id))
-}
 
 // GENERAL
 
@@ -100,11 +36,11 @@ export function assertIsCEO(): void {
 
 /**
  * returns true if the context.sender is the owner of the blockemon
- * @param blockemon
+ * @param monkey
  */
-export function assertIsOwner(blockemon: Blockemon): void {
+export function assertIsOwner(monkey: Monkey): void {
     assert(
-        blockemon.owner == context.sender,
+        monkey.owner == context.sender,
         'The blockemon does not belong to ' + context.sender
     )
 }
@@ -244,6 +180,21 @@ export function addMonkeyToGlobalList(monkeyId: u64): void {
 }
 
 /**
+ * Deletes a blockemon from the ordered blockemon list with the given id.
+ * @param id
+ */
+export function deleteFromMonkeyBlockemonList(id: u64): void {
+    const globalIds = getAllMonkeyIds()
+    for (let i = 0; i < globalIds.length; i++) {
+        if (id == globalIds[i]) {
+            globalIds.splice(i, 1)
+            break
+        }
+    }
+    orderedMonkeyIdList.set('all', new MonkeyIdList(globalIds))
+}
+
+/**
  *
  * @returns all the monkey ids from the monkeyid list
  */
@@ -252,6 +203,6 @@ export function getAllMonkeyIds(): Array<u64> {
     return monkeyIdList ? monkeyIdList.id : new Array<u64>()
 }
 
-export function getMonkeyById(id: u64): Monkey {
+export function monkeyById(id: u64): Monkey {
     return monkeyIdMap.getSome(id)
 }

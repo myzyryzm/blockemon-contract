@@ -14,6 +14,13 @@ export class EscrowMonkeyIds {
 
 @nearBindgen
 export class Monkey {
+    speed: u64
+    physical: u64
+    special: u64
+    stamina: u64
+    health: u64
+    distanceTraveled: u64
+    coinsCollected: u64
     constructor(public id: u64, public speciesId: u64, public owner: string) {}
 }
 

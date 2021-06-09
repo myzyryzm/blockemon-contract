@@ -49,6 +49,7 @@ export function initializeContract(): string {
  * @returns
  */
 export function createMonkeySpecies(maxMonkeys: u64): MonkeySpecies {
+    assertHasInit()
     assertIsCEO()
     const speciesIdList = orderedMonkeySpeciesIdList.get('all')
     let numSpecies: u64 = 0
@@ -74,6 +75,7 @@ export function createMonkeySpeciesWithId(
     id: u64,
     maxMonkeys: u64
 ): MonkeySpecies {
+    assertHasInit()
     assertIsCEO()
     assert(
         !monkeySpeciesIdMap.contains(id),
@@ -90,6 +92,7 @@ export function createMonkeySpeciesWithId(
  * @returns
  */
 export function createMonkey(speciesId: u64, owner: string): Monkey {
+    assertHasInit()
     assertIsCEO()
     const monkeyIdList = orderedMonkeyIdList.get('all')
     let numMonkeys: u64 = 0
@@ -116,6 +119,7 @@ export function createMonkeyWithId(
     speciesId: u64,
     owner: string
 ): Monkey {
+    assertHasInit()
     assertIsCEO()
     assert(
         !monkeyIdMap.contains(id),
@@ -126,6 +130,7 @@ export function createMonkeyWithId(
 }
 
 export function transferMonkey(newOwner: string, id: u64): Monkey {
+    assertHasInit()
     const monkey = monkeyById(id)
     assertCanTransfer(monkey)
     removeMonkeyFromOwner(monkey, monkey.owner)
